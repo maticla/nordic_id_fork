@@ -376,6 +376,7 @@ public class NurHelper {
     private final NurApiListener mNurApiListener = new NurApiListener() {
         @Override
         public void triggeredReadEvent(NurEventTriggeredRead event) {
+            Log.i("NUR_API", "Triggered read event!");
         }
 
         @Override
