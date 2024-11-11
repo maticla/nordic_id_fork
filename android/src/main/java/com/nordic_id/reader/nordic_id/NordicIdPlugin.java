@@ -105,10 +105,10 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                     NurHelper.getInstance().doSingleInventory(); //Make single round inventory.
                 } catch (Exception ex) {
                     Toast.makeText(activity, ex.getMessage(), Toast.LENGTH_LONG).show();
+                    // NurHelper.getInstance().destroy();
                     result.success(false);
                 }
 
-                NurHelper.getInstance().destroy();
                 result.success(true);
                 break;
 
