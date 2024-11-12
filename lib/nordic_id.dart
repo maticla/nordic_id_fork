@@ -16,8 +16,7 @@ class NordicId {
   }
 
   static const EventChannel tagsStatusStream = EventChannel('TagsStatus');
-  static const EventChannel connectionStatusStream =
-      EventChannel('ConnectionStatus');
+  static const EventChannel connectionStatusStream = EventChannel('ConnectionStatus');
 
   static Future<bool?> get initialize async {
     return _channel.invokeMethod('Initialize');
@@ -49,6 +48,10 @@ class NordicId {
 
   static Future<bool?> get refreshTracing async {
     return _channel.invokeMethod('RefreshTracing');
+  }
+
+  static Future<bool?> readTag(String tagId) async {
+    return _channel.invokeMethod('ReadTag', {'tag': tagId});
   }
 
   /* static Future<bool?> setWorkArea(String value) async {
