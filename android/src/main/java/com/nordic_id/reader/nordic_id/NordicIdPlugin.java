@@ -121,38 +121,48 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                     NurApi nurApi = NurHelper.GetNurApi();
                     byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
 
-                    // Try reading from different memory banks to diagnose
                     HashMap<String, Object> readResult = new HashMap<>();
 
                     try {
-                        // Try USER bank (where sensor data should be)
-                        byte[] userData = nurApi.readTagByEpc(
+                        // Read sensor data from USER memory bank
+                        byte[] sensorData = nurApi.readTagByEpc(
                             targetEpcData,
                             targetEpcData.length,
                             NurApi.BANK_USER,
-                            0x0E,  // Magnus S3 sensor address
-                            4      // Number of words
+                            0x0E,  // Magnus S3 sensor data address
+                            2      // Read 2 words (4 bytes) of sensor data
                         );
-                        readResult.put("user_data", NurApi.byteArrayToHexString(userData));
                         
-                        // Also try reading from start of USER bank
-                        byte[] userStart = nurApi.readTagByEpc(
-                            targetEpcData,
-                            targetEpcData.length,
-                            NurApi.BANK_USER,
-                            0x00,  // Start of USER memory
-                            4
-                        );
-                        readResult.put("user_start", NurApi.byteArrayToHexString(userStart));
+                        // Convert bytes to sensor values
+                        int rawData = ((sensorData[0] & 0xFF) << 8) | (sensorData[1] & 0xFF);
+                        
+                        // Extract temperature (10 bits)
+                        int tempCode = (rawData >> 6) & 0x3FF;
+                        double temperature = -40 + (0.1 * tempCode);
+                        
+                        // Extract humidity (10 bits)
+                        int humidityCode = ((rawData & 0x3F) << 4) | ((rawData >> 12) & 0x0F);
+                        double humidity = (0.1 * humidityCode);
+                        
+                        readResult.put("temperature", temperature);
+                        readResult.put("humidity", humidity);
+                        readResult.put("raw_data", NurApi.byteArrayToHexString(sensorData));
+                        
+                        result.success(readResult);
+                    } catch (Exception ex) {
+                        readResult.put("error_details", ex.getMessage());
+                        result.error("SENSOR_READ_ERROR", ex.getMessage(), null);
+                    }
                 } catch (Exception ex) {
-                    readResult.put("error_details", ex.getMessage());
+                    Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+                    result.error("READ_ERROR", ex.getMessage(), null);
                 }
         
-        result.success(readResult);
-    } catch (Exception ex) {
-        Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
-        result.error("READ_ERROR", ex.getMessage(), null);
-    }
+                result.success(readResult);
+            } catch (Exception ex) {
+                    Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+                    result.error("READ_ERROR", ex.getMessage(), null);
+            }
                 break;
 
             default:
