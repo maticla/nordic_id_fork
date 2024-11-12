@@ -121,18 +121,18 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                         NurApi nurApi = NurHelper.GetNurApi();
                         byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
                         
-                        // Read TID bank first to identify the tag
-                        byte[] tidData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_TID, 0, 4);
+                        // Read TID bank with more words (12 bytes = 6 words)
+                        byte[] tidData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_TID, 0, 6);
                         String tidHex = NurApi.byteArrayToHexString(tidData);
                         
-                        // Read EPC bank
-                        byte[] epcData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_EPC, 0, 8);
-                        String epcHex = NurApi.byteArrayToHexString(epcData);
+                        // Parse TID data
+                        String manufacturer = tidHex.substring(0, 2);  // First byte is typically manufacturer ID
+                        String model = tidHex.substring(2, 4);        // Second byte is typically model number
                         
-                        // Create result map
                         HashMap<String, String> readResult = new HashMap<>();
                         readResult.put("tid", tidHex);
-                        readResult.put("epc", epcHex);
+                        readResult.put("tid_manufacturer", manufacturer);
+                        readResult.put("tid_model", model);
                         
                         // Try to read USER bank (might fail if not available)
                         try {
