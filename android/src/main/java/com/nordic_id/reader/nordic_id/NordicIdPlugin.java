@@ -7,6 +7,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.nordicid.nurapi.NurApi;
+
 import java.util.HashMap;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -114,15 +116,38 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                 break;
 
             case CHANNEL_ReadTag:
-                try {
-                    // TODO: Implement reading of tag via its EPC tag.
-                    String epcTag = call.argument("tag");
-                    Toast.makeText(activity, "Reading tag " + epcTag, Toast.LENGTH_LONG).show();
-                    result.success(true);
-                } catch (Exception ex) {
-                    Toast.makeText(activity, "Failed to read tag", Toast.LENGTH_LONG).show();
-                    result.success(false);
-                }
+                    try {
+                        String epcTag = call.argument("tag");
+                        NurApi nurApi = NurHelper.GetNurApi();
+                        byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
+                        
+                        // Read TID bank first to identify the tag
+                        byte[] tidData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_TID, 0, 4);
+                        String tidHex = NurApi.byteArrayToHexString(tidData);
+                        
+                        // Read EPC bank
+                        byte[] epcData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_EPC, 0, 8);
+                        String epcHex = NurApi.byteArrayToHexString(epcData);
+                        
+                        // Create result map
+                        HashMap<String, String> readResult = new HashMap<>();
+                        readResult.put("tid", tidHex);
+                        readResult.put("epc", epcHex);
+                        
+                        // Try to read USER bank (might fail if not available)
+                        try {
+                            byte[] userData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_USER, 0, 4);
+                            String userHex = NurApi.byteArrayToHexString(userData);
+                            readResult.put("user", userHex);
+                        } catch (Exception e) {
+                            readResult.put("user", "Not available");
+                        }
+                        
+                        result.success(readResult);
+                    } catch (Exception ex) {
+                        Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+                        result.error("READ_ERROR", ex.getMessage(), null);
+                    }
                 break;
 
             default:
