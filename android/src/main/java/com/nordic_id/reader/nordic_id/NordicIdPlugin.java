@@ -116,30 +116,43 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                 break;
 
             case CHANNEL_ReadTag:
+                try {
+                    String epcTag = call.argument("tag");
+                    NurApi nurApi = NurHelper.GetNurApi();
+                    byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
+
+                    // Try reading from different memory banks to diagnose
+                    HashMap<String, Object> readResult = new HashMap<>();
+
                     try {
-                        String epcTag = call.argument("tag");
-                        NurApi nurApi = NurHelper.GetNurApi();
-                        byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
-
-                        // Constants for Brady THT-UHF B423
-                          final double DRY_THRESHOLD_PF = 15.0;
-                          final int SENSOR_BANK = NurApi.BANK_USER;
-                          final int SENSOR_ADDRESS = 0x0E;  // Magnus S3 sensor data address
-
-                        // Read sensor data (Magnus S3 specific)
-                        byte[] sensorData = nurApi.readTagByEpc(
+                        // Try USER bank (where sensor data should be)
+                        byte[] userData = nurApi.readTagByEpc(
                             targetEpcData,
                             targetEpcData.length,
-                            SENSOR_BANK,
-                            SENSOR_ADDRESS,
-                            4  // Magnus S3 requires 4 words for full sensor data
+                            NurApi.BANK_USER,
+                            0x0E,  // Magnus S3 sensor address
+                            4      // Number of words
                         );
+                        readResult.put("user_data", NurApi.byteArrayToHexString(userData));
                         
-                        result.success(sensorData);
-                    } catch (Exception ex) {
-                        Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
-                        result.error("READ_ERROR", ex.getMessage(), null);
-                    }
+                        // Also try reading from start of USER bank
+                        byte[] userStart = nurApi.readTagByEpc(
+                            targetEpcData,
+                            targetEpcData.length,
+                            NurApi.BANK_USER,
+                            0x00,  // Start of USER memory
+                            4
+                        );
+                        readResult.put("user_start", NurApi.byteArrayToHexString(userStart));
+                } catch (Exception ex) {
+                    readResult.put("error_details", ex.getMessage());
+                }
+        
+        result.success(readResult);
+    } catch (Exception ex) {
+        Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+        result.error("READ_ERROR", ex.getMessage(), null);
+    }
                 break;
 
             default:
