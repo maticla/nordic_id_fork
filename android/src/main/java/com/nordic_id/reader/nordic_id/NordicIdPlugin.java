@@ -117,7 +117,7 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                 try {
                     // TODO: Implement reading of tag via its EPC tag.
                     String epcTag = call.argument("tag");
-                    Toast.makeText(activity, "Reading tag " + epcTag, Toast.LENGTH_LONG);
+                    Toast.makeText(activity, "Reading tag " + epcTag, Toast.LENGTH_LONG).show();
                     result.success(true);
                 } catch (Exception ex) {
                     Toast.makeText(activity, "Failed to read tag", Toast.LENGTH_LONG).show();
