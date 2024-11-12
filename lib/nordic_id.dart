@@ -50,7 +50,7 @@ class NordicId {
     return _channel.invokeMethod('RefreshTracing');
   }
 
-  static Future<bool?> readTag(String tagId) async {
+  static Future<dynamic> readTag(String tagId) async {
     return _channel.invokeMethod('ReadTag', {'tag': tagId});
   }
 
