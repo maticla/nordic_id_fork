@@ -120,30 +120,22 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                         String epcTag = call.argument("tag");
                         NurApi nurApi = NurHelper.GetNurApi();
                         byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
+
+                        // Constants for Brady THT-UHF B423
+                          final double DRY_THRESHOLD_PF = 15.0;
+                          final int SENSOR_BANK = NurApi.BANK_USER;
+                          final int SENSOR_ADDRESS = 0x0E;  // Magnus S3 sensor data address
+
+                        // Read sensor data (Magnus S3 specific)
+                        byte[] sensorData = nurApi.readTagByEpc(
+                            targetEpcData,
+                            targetEpcData.length,
+                            SENSOR_BANK,
+                            SENSOR_ADDRESS,
+                            4  // Magnus S3 requires 4 words for full sensor data
+                        );
                         
-                        // Read TID bank with more words (12 bytes = 6 words)
-                        byte[] tidData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_TID, 0, 6);
-                        String tidHex = NurApi.byteArrayToHexString(tidData);
-                        
-                        // Parse TID data
-                        String manufacturer = tidHex.substring(0, 2);  // First byte is typically manufacturer ID
-                        String model = tidHex.substring(2, 4);        // Second byte is typically model number
-                        
-                        HashMap<String, String> readResult = new HashMap<>();
-                        readResult.put("tid", tidHex);
-                        readResult.put("tid_manufacturer", manufacturer);
-                        readResult.put("tid_model", model);
-                        
-                        // Try to read USER bank (might fail if not available)
-                        try {
-                            byte[] userData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_USER, 0, 4);
-                            String userHex = NurApi.byteArrayToHexString(userData);
-                            readResult.put("user", userHex);
-                        } catch (Exception e) {
-                            readResult.put("user", "Not available");
-                        }
-                        
-                        result.success(readResult);
+                        result.success(sensorData);
                     } catch (Exception ex) {
                         Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
                         result.error("READ_ERROR", ex.getMessage(), null);
