@@ -309,23 +309,26 @@ public class NurHelper {
                 int xpcW2 = tag.getXPC_W2();
                 Log.d("XPCW2_RAW", String.valueOf(xpcW2));
 
-// Let's see the full hex value
-                Log.d("XPCW2_HEX", String.format("0x%04X", xpcW2 & 0xFFFF));
+                // Get just the lower byte which contains our data (CA, CD, CB etc)
+                int lowerByte = xpcW2 & 0xFF;
+                Log.d("XPCW2_HEX", String.format("0x%02X", lowerByte));
 
-// Parse according to specification
-                int sensorType = (xpcW2 >> 12) & 0xF;    // First 4 bits
-                int dataType = (xpcW2 >> 10) & 0x3;      // Next 2 bits
-                int sensorValue = xpcW2 & 0x3FF;         // Last 10 bits
-
-// If it's a negative value (bit 9 is set)
-                if ((sensorValue & 0x200) != 0) {
-                    sensorValue = -(((~sensorValue) & 0x3FF) + 1);
-                }
+                // Parse according to specification
+                // For byte 0xCA: 1100 1010
+                //                SSDD VVVV  (S=SensorType, D=DataType, V=Value)
+                int sensorType = (lowerByte >> 6) & 0x3;    // First 2 bits (11)
+                int dataType = (lowerByte >> 4) & 0x3;      // Next 2 bits (00)
+                int sensorValue = lowerByte & 0xF;          // Last 4 bits (1010)
 
                 Log.d("XPCW2_PARSED", String.format(
-                        "SensorType: %d, DataType: %d, Value: %d",
-                        sensorType, dataType, sensorValue
+                    "SensorType: %d, DataType: %d, Value: %d (0x%02X)",
+                    sensorType, dataType, sensorValue, lowerByte
                 ));
+
+                // For debugging, show binary format
+                Log.d("XPCW2_BINARY", String.format(
+                    "%8s", Integer.toBinaryString(lowerByte & 0xFF)).replace(' ', '0')
+                );
 
                 if (mTagStorage.addTag(tag)) {
                     // Add new
