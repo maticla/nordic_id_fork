@@ -293,7 +293,7 @@ public class NurHelper {
      * New tags will be added to our existing tag storage.
      * List view adapter will be updated for new tags
      */
-    public void handleInventoryResult() {
+    public void handleInventoryResult() throws Exception {
         synchronized (mNurApi.getStorage()) {
             HashMap<String, String> tmp;
             NurTagStorage tagStorage = mNurApi.getStorage();
@@ -311,11 +311,17 @@ public class NurHelper {
                     tmp.put("epc", tag.getEpcString());
                     tmp.put("rssi", Integer.toString(tag.getRssi()));
                     tmp.put("irData", Arrays.toString(tag.getIrData()));
+                    tmp.put("xpc w1", String.valueOf(tag.getXPC_W1()));
+                    tmp.put("xpc w2", String.valueOf(tag.getXPC_W2()));
+                    tmp.put("queryTag", tag.queryTag().toString());
                     tag.setUserdata(tmp);
                     try {
                         json.put("epc", tag.getEpcString());
                         json.put("rssi", Integer.toString(tag.getRssi()));
                         json.put("irData", Arrays.toString(tag.getIrData()));
+                        json.put("xpc w1", String.valueOf(tag.getXPC_W1()));
+                        json.put("xpc w2", String.valueOf(tag.getXPC_W2()));
+                        json.put("queryTag", tag.queryTag().toString());
                         jsonArray.put(json);
                     } catch (JSONException e) {
                         e.printStackTrace();
