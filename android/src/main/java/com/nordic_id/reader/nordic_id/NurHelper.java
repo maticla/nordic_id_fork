@@ -503,6 +503,9 @@ public class NurHelper {
                 try {
                     NurRespReadData data = mNurApi.scanSingleTag();
                     Log.d("SCANNER", data.toString());
+                    Log.d("SCANNER", data.epcStr);
+                    Log.d("SCANNER", Arrays.toString(data.epc));
+                    Log.d("SCANNER", data.epcStr);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
