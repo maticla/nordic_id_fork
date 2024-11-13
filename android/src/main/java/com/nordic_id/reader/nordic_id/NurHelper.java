@@ -310,11 +310,13 @@ public class NurHelper {
                     tmp.put("epc", tag.getEpcString());
                     tmp.put("rssi", Integer.toString(tag.getRssi()));
                     tmp.put("dataString", tag.getDataString());
+                    tmp.put("userData", tag.getUserdata().toString());
                     tag.setUserdata(tmp);
                     try {
                         json.put("epc", tag.getEpcString());
                         json.put("rssi", Integer.toString(tag.getRssi()));
                         json.put("dataString", tag.getDataString());
+                        json.put("userData", tag.getUserdata().toString());
                         jsonArray.put(json);
                     } catch (JSONException e) {
                         e.printStackTrace();
