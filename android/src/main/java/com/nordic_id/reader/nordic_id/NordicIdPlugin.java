@@ -130,7 +130,7 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                             NurApi.BANK_USER       // Bank 3
                     };
 
-                    String[] bankNames = {"RESERVED", "EPC", "TID", "USER"};
+                    String[] bankNames = {"EPC", "TID", "USER"};
 
                     // Try different combinations of offsets and lengths
                     for (int b = 0; b < banks.length; b++) {
