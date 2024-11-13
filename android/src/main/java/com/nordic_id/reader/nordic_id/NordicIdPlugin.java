@@ -137,10 +137,18 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                     } else {
                         Log.d("READ_TAG", "NOT OK");
                     }
-
-                    // Read user memory bank where moisture data should be stored
-                    byte[] userMemory = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_USER, 0, 4);
-                    Log.d("READ_TAG", "User Memory Data: " + NurApi.byteArrayToHexString(userMemory));
+                    
+                    // Read first 32 bytes (8 words) of user memory with different offsets
+                    for (int offset = 0; offset < 8; offset++) {
+                        try {
+                            byte[] userMemory = nurApi.readTagByEpc(targetEpcData, targetEpcData.length,
+                                    NurApi.BANK_USER, offset, 8);
+                            Log.d("READ_TAG", "User Memory Data (offset " + offset + "): "
+                                    + NurApi.byteArrayToHexString(userMemory));
+                        } catch (Exception e) {
+                            Log.d("READ_TAG", "Failed to read offset " + offset + ": " + e.getMessage());
+                        }
+                    }
 
                     result.success(true);
 
