@@ -36,6 +36,7 @@ import com.nordicid.nurapi.NurEventTagTrackingData;
 import com.nordicid.nurapi.NurEventTraceTag;
 import com.nordicid.nurapi.NurEventTriggeredRead;
 import com.nordicid.nurapi.NurRespDevCaps;
+import com.nordicid.nurapi.NurRespReadData;
 import com.nordicid.nurapi.NurRespReaderInfo;
 import com.nordicid.nurapi.NurTag;
 import com.nordicid.nurapi.NurTagStorage;
@@ -494,7 +495,18 @@ public class NurHelper {
 
         @Override
         public void IOChangeEvent(NurEventIOChange event) {
+
             Log.i(TAG, "Key " + event.source);
+
+            // trigger button
+            if(event.source == 100) {
+                try {
+                    NurRespReadData data = mNurApi.scanSingleTag();
+                    Log.d("SCANNER", data.toString());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         @Override
