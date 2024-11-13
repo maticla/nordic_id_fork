@@ -310,6 +310,17 @@ public class NurHelper {
 
                 Log.d("XPCW2", String.valueOf(xpcW2));
 
+                Log.d("XPCW2", String.format("XPC_W2 hex: 0x%04X", xpcW2));
+
+                // Extract fields
+                int sensorType = (int)((xpcW2 >> 12) & 0xF);  // First 4 bits
+                int dataType = (int)((xpcW2 >> 10) & 0x3);    // Next 2 bits
+                int sensorValue = (int)(xpcW2 & 0x3FF);       // Last 10 bits
+
+                // For debugging
+                Log.d("XPCW2", String.format("SensorType: %d, DataType: %d, Value: %d",
+                        sensorType, dataType, sensorValue));
+
                 if (mTagStorage.addTag(tag)) {
                     // Add new
                     tmp = new HashMap<String, String>();
