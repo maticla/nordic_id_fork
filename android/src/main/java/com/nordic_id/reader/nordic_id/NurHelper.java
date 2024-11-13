@@ -294,67 +294,43 @@ public class NurHelper {
      * New tags will be added to our existing tag storage.
      * List view adapter will be updated for new tags
      */
-    public void handleInventoryResult() throws Exception {
+    public void handleInventoryResult() {
         synchronized (mNurApi.getStorage()) {
-                 HashMap<String, String> tmp;
-        NurTagStorage tagStorage = mNurApi.getStorage();
+            HashMap<String, String> tmp;
+            NurTagStorage tagStorage = mNurApi.getStorage();
 
-        for (int i = 0; i < tagStorage.size(); i++) {
-            JSONObject json = new JSONObject();
-            NurTag tag = tagStorage.get(i);
+            // Add tags tp internal tag storage
+            for (int i = 0; i < tagStorage.size(); i++) {
+                JSONObject json = new JSONObject();
+                NurTag tag = tagStorage.get(i);
 
-            final JSONArray jsonArray = new JSONArray();
+                final JSONArray jsonArray = new JSONArray();
 
-            if (mTagStorage.addTag(tag)) {
-                tmp = new HashMap<String, String>();
-                tmp.put("epc", tag.getEpcString());
-                tmp.put("rssi", Integer.toString(tag.getRssi()));
-                
-                // Get XPC values as unsigned
-                long xpcW2 = tag.getXPC_W2() & 0xFFFFL;
-                
-                // Extract sensor data from XPC_W2
-                int sensorType = (int)((xpcW2 >> 12) & 0xF);
-                int sensorData = (int)(xpcW2 & 0xFFF);
-                
-                int dataType = (sensorData >> 10) & 0x3;
-                int rawValue = sensorData & 0x3FF;
-                
-                // Convert raw value to picofarads
-                double picofarads = -1;
-                String moistureState = "";
-                if (rawValue != 1023) { // 1023 indicates error condition
-                    // Convert 10-bit value (0-1023) to picofarads range (0-30pF)
-                    picofarads = (rawValue / 1023.0) * 30.0;
-                    
-                    // Determine moisture state
-                    moistureState = (picofarads > 15.0) ? "WET" : "DRY";
+                long xpcW2 = tag.getXPC_W2();
+
+                Log.d("XPCW2", String.valueOf(xpcW2));
+
+                if (mTagStorage.addTag(tag)) {
+                    // Add new
+                    tmp = new HashMap<String, String>();
+                    tmp.put("epc", tag.getEpcString());
+                    tmp.put("rssi", Integer.toString(tag.getRssi()));
+                    tag.setUserdata(tmp);
+                    try {
+                        json.put("epc", tag.getEpcString());
+                        json.put("rssi", Integer.toString(tag.getRssi()));
+                        jsonArray.put(json);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    mNurListener.onInventoryResult(tmp, jsonArray.toString());
                 }
-                
-                tmp.put("xpc_w2_hex", String.format("0x%04X", xpcW2));
-                tmp.put("raw_value", String.valueOf(rawValue));
-                tmp.put("moisture_pf", picofarads >= 0 ? String.format("%.1f pF", picofarads) : "Error");
-                tmp.put("state", picofarads >= 0 ? moistureState : "Error");
-
-                tag.setUserdata(tmp);
-                
-                try {
-                    json.put("epc", tag.getEpcString());
-                    json.put("rssi", Integer.toString(tag.getRssi()));
-                    json.put("xpc_w2_hex", String.format("0x%04X", xpcW2));
-                    json.put("raw_value", String.valueOf(rawValue));
-                    json.put("moisture_pf", picofarads >= 0 ? String.format("%.1f", picofarads) : "Error");
-                    json.put("state", moistureState);
-                    jsonArray.put(json);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                mNurListener.onInventoryResult(tmp, jsonArray.toString());
             }
-        }
 
-        tagStorage.clear();
+            // Clear NurApi tag storage
+            tagStorage.clear();
+            //Beeper.beep(Beeper.BEEP_40MS);
         }
     }
 
