@@ -125,15 +125,17 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                     NurApi nurApi = NurHelper.GetNurApi();
                     byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
 
-//                    NurIRConfig nurIrConfig = new NurIRConfig();
-//
-//                    nurIrConfig.IsRunning = true;
-//
-//                    nurIrConfig.irType = NurApi.IRTYPE_EPCDATA;
-//
-//                    nurIrConfig.irBank = NurApi.BANK_TID;
+                    NurIRConfig nurIRConfig = new NurIRConfig();
+                    nurIRConfig.IsRunning = true;
+                    nurIRConfig.irType = NurApi.IRTYPE_EPCDATA;
+                    nurIRConfig.irBank = NurApi.BANK_USER;
+                    nurIRConfig.irAddr = 0;
+                    nurIRConfig.irWordCount = 4;
 
+                    NurRespReadData readResp = nurApi.readTagByEPC(targetEpcData, NurApi.BANK_USER, 0, 4);
+                    String moistureData = NurApi.byteArrayToHexString(readResp.epc);
 
+                    Log.d("MOISTURE", moistureData);
 
                     result.success(true);
 
