@@ -309,10 +309,12 @@ public class NurHelper {
                     tmp = new HashMap<String, String>();
                     tmp.put("epc", tag.getEpcString());
                     tmp.put("rssi", Integer.toString(tag.getRssi()));
+                    tmp.put("dataString", tag.getDataString());
                     tag.setUserdata(tmp);
                     try {
                         json.put("epc", tag.getEpcString());
                         json.put("rssi", Integer.toString(tag.getRssi()));
+                        json.put("dataString", tag.getDataString());
                         jsonArray.put(json);
                     } catch (JSONException e) {
                         e.printStackTrace();

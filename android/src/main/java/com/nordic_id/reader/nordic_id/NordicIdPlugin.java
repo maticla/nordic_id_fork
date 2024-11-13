@@ -9,6 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.nordicid.nurapi.NurApi;
+import com.nordicid.nurapi.NurIRConfig;
+import com.nordicid.nurapi.NurRespReadData;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -123,59 +125,15 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                     NurApi nurApi = NurHelper.GetNurApi();
                     byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
 
-                    // Define banks to scan
-                    int[] banks = {
-                            NurApi.BANK_EPC,       // Bank 1
-                            NurApi.BANK_TID,       // Bank 2
-                            NurApi.BANK_USER       // Bank 3
-                    };
+//                    NurIRConfig nurIrConfig = new NurIRConfig();
+//
+//                    nurIrConfig.IsRunning = true;
+//
+//                    nurIrConfig.irType = NurApi.IRTYPE_EPCDATA;
+//
+//                    nurIrConfig.irBank = NurApi.BANK_TID;
 
-                    String[] bankNames = {"EPC", "TID", "USER"};
 
-                    // Try different combinations of offsets and lengths
-                    for (int b = 0; b < banks.length; b++) {
-                        Log.d("READ_TAG", "=== Scanning " + bankNames[b] + " Bank ===");
-
-                        // Try different starting offsets (in words)
-                        for (int offset = 0; offset < 16; offset++) {
-                            // Try different lengths (in words)
-                            for (int length = 1; length <= 16; length++) {
-                                try {
-                                    byte[] memory = nurApi.readTagByEpc(
-                                            targetEpcData,
-                                            targetEpcData.length,
-                                            banks[b],
-                                            offset,
-                                            length
-                                    );
-
-                                    String hexData = NurApi.byteArrayToHexString(memory);
-                                    if (!hexData.matches("^0+$")) { // Only log non-zero data
-                                        Log.d("READ_TAG", String.format(
-                                                "Bank: %s, Offset: %d, Length: %d, Data: %s",
-                                                bankNames[b],
-                                                offset,
-                                                length,
-                                                hexData
-                                        ));
-                                    }
-                                } catch (Exception e) {
-                                    // Log only if it's not a typical "out of bounds" error
-                                    if (!e.getMessage().contains("Too many words requested") &&
-                                            !e.getMessage().contains("No tag found") &&
-                                            !e.getMessage().contains("Access denied")) {
-                                        Log.d("READ_TAG", String.format(
-                                                "Error reading Bank: %s, Offset: %d, Length: %d - %s",
-                                                bankNames[b],
-                                                offset,
-                                                length,
-                                                e.getMessage()
-                                        ));
-                                    }
-                                }
-                            }
-                        }
-                    }
 
                     result.success(true);
 
