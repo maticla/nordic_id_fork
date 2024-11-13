@@ -306,18 +306,21 @@ public class NurHelper {
 
                 final JSONArray jsonArray = new JSONArray();
 
-                long xpcW2 = tag.getXPC_W2();
-
+                int xpcW2 = tag.getXPC_W2();
                 Log.d("XPCW2_RAW", String.valueOf(xpcW2));
 
-                // Convert to unsigned value
-                long unsignedValue = xpcW2 & 0xFF;  // Convert signed byte to unsigned int
-                Log.d("XPCW2_UNSIGNED", String.valueOf(unsignedValue));
+// Let's see the full hex value
+                Log.d("XPCW2_HEX", String.format("0x%04X", xpcW2 & 0xFFFF));
 
-                // Extract fields
-                long sensorType = (unsignedValue >> 4) & 0xF;  // First 4 bits
-                long dataType = (unsignedValue >> 2) & 0x3;    // Next 2 bits
-                long sensorValue = unsignedValue & 0x3;        // Last 2 bits
+// Parse according to specification
+                int sensorType = (xpcW2 >> 12) & 0xF;    // First 4 bits
+                int dataType = (xpcW2 >> 10) & 0x3;      // Next 2 bits
+                int sensorValue = xpcW2 & 0x3FF;         // Last 10 bits
+
+// If it's a negative value (bit 9 is set)
+                if ((sensorValue & 0x200) != 0) {
+                    sensorValue = -(((~sensorValue) & 0x3FF) + 1);
+                }
 
                 Log.d("XPCW2_PARSED", String.format(
                         "SensorType: %d, DataType: %d, Value: %d",
