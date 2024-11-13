@@ -126,12 +126,11 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                     byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
 
                     // Read XPC_W2 from EPC memory bank which contains sensor data
-                    byte[] sensorData = nurApi.readTagByEpc(
-                            targetEpcData,
-                            targetEpcData.length,
+                    byte[] sensorData = nurApi.readTag(
+                            0,
                             NurApi.BANK_EPC,     // Bank 1 (EPC)
-                            0x22,                // Starting from word address 22h
-                            1                    // Read 1 word (2 bytes) for XPC_W2
+                            0x22,                // Starting from word address 22h (34 decimal)
+                            1                 // Read 1 word (2 bytes)
                     );
 
                     String hexData = NurApi.byteArrayToHexString(sensorData);
