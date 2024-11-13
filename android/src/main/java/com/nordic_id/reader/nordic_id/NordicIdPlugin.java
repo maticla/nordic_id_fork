@@ -2,6 +2,7 @@ package com.nordic_id.reader.nordic_id;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -9,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import com.nordicid.nurapi.NurApi;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -119,40 +121,25 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                 try {
                     String epcTag = call.argument("tag");
                     NurApi nurApi = NurHelper.GetNurApi();
-                    byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
 
-                    HashMap<String, Object> readResult = new HashMap<>();
+                    byte []targetEpcData = NurApi.hexStringToByteArray(epcTag);
 
-                    try {
-                        // Read sensor data from USER memory bank
-                        byte[] sensorData = nurApi.readTagByEpc(
-                                targetEpcData,
-                                targetEpcData.length,
-                                NurApi.BANK_USER,
-                                0x0E,  // Magnus S3 sensor data address
-                                2      // Read 2 words (4 bytes) of sensor data
-                        );
+                    Log.d("READ_TAG", "Read TID from tag " + epcTag);
+                    byte []tidData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_TID, 0, 4);
 
-                        // Convert bytes to sensor values
-                        int rawData = ((sensorData[0] & 0xFF) << 8) | (sensorData[1] & 0xFF);
+                    Log.d("READ_TAG", "Read EPC from tag TID " + Arrays.toString(tidData));
+                    byte []readEpcData = nurApi.readTag(NurApi.BANK_TID, 0, tidData.length*8, tidData, NurApi.BANK_EPC, 2, targetEpcData.length);
 
-                        // Extract temperature (10 bits)
-                        int tempCode = (rawData >> 6) & 0x3FF;
-                        double temperature = -40 + (0.1 * tempCode);
+                    Log.d("READ_TAG", "Read EPC " + NurApi.byteArrayToHexString(readEpcData));
 
-                        // Extract humidity (10 bits)
-                        int humidityCode = ((rawData & 0x3F) << 4) | ((rawData >> 12) & 0x0F);
-                        double humidity = (0.1 * humidityCode);
-
-                        readResult.put("temperature", temperature);
-                        readResult.put("humidity", humidity);
-                        readResult.put("raw_data", NurApi.byteArrayToHexString(sensorData));
-
-                        result.success(readResult);
-                    } catch (Exception ex) {
-                        readResult.put("error_details", ex.getMessage());
-                        result.error("SENSOR_READ_ERROR", ex.getMessage(), null);
+                    if(epcTag.equals(NurApi.byteArrayToHexString(readEpcData))) {
+                        Log.d("READ_TAG", "OK");
+                    } else {
+                        Log.d("READ_TAG", "NOT OK");
                     }
+
+                    result.success(true);
+
                 } catch (Exception ex) {
                     Toast.makeText(activity, "Failed to read tag: " + ex.getMessage(), Toast.LENGTH_LONG).show();
                     result.error("READ_ERROR", ex.getMessage(), null);
