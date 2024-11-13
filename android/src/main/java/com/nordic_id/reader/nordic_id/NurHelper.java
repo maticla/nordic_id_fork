@@ -46,6 +46,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import nordicid.com.nurupdate.NurDeviceUpdate;
@@ -309,14 +310,12 @@ public class NurHelper {
                     tmp = new HashMap<String, String>();
                     tmp.put("epc", tag.getEpcString());
                     tmp.put("rssi", Integer.toString(tag.getRssi()));
-                    tmp.put("dataString", tag.getDataString());
-                    tmp.put("userData", tag.getUserdata().toString());
+                    tmp.put("irData", Arrays.toString(tag.getIrData()));
                     tag.setUserdata(tmp);
                     try {
                         json.put("epc", tag.getEpcString());
                         json.put("rssi", Integer.toString(tag.getRssi()));
-                        json.put("dataString", tag.getDataString());
-                        json.put("userData", tag.getUserdata().toString());
+                        json.put("irData", Arrays.toString(tag.getIrData()));
                         jsonArray.put(json);
                     } catch (JSONException e) {
                         e.printStackTrace();
