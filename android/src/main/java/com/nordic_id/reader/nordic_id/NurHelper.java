@@ -308,18 +308,21 @@ public class NurHelper {
 
                 long xpcW2 = tag.getXPC_W2();
 
-                Log.d("XPCW2", String.valueOf(xpcW2));
+                Log.d("XPCW2_RAW", String.valueOf(xpcW2));
 
-                Log.d("XPCW2", String.format("XPC_W2 hex: 0x%04X", xpcW2));
+                // Convert to unsigned value
+                long unsignedValue = xpcW2 & 0xFF;  // Convert signed byte to unsigned int
+                Log.d("XPCW2_UNSIGNED", String.valueOf(unsignedValue));
 
                 // Extract fields
-                int sensorType = (int)((xpcW2 >> 12) & 0xF);  // First 4 bits
-                int dataType = (int)((xpcW2 >> 10) & 0x3);    // Next 2 bits
-                int sensorValue = (int)(xpcW2 & 0x3FF);       // Last 10 bits
+                long sensorType = (unsignedValue >> 4) & 0xF;  // First 4 bits
+                long dataType = (unsignedValue >> 2) & 0x3;    // Next 2 bits
+                long sensorValue = unsignedValue & 0x3;        // Last 2 bits
 
-                // For debugging
-                Log.d("XPCW2", String.format("SensorType: %d, DataType: %d, Value: %d",
-                        sensorType, dataType, sensorValue));
+                Log.d("XPCW2_PARSED", String.format(
+                        "SensorType: %d, DataType: %d, Value: %d",
+                        sensorType, dataType, sensorValue
+                ));
 
                 if (mTagStorage.addTag(tag)) {
                     // Add new
