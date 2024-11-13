@@ -121,32 +121,59 @@ public class NordicIdPlugin implements FlutterPlugin, MethodCallHandler, Activit
                 try {
                     String epcTag = call.argument("tag");
                     NurApi nurApi = NurHelper.GetNurApi();
+                    byte[] targetEpcData = NurApi.hexStringToByteArray(epcTag);
 
-                    byte []targetEpcData = NurApi.hexStringToByteArray(epcTag);
+                    // Define banks to scan
+                    int[] banks = {
+                            NurApi.BANK_EPC,       // Bank 1
+                            NurApi.BANK_TID,       // Bank 2
+                            NurApi.BANK_USER       // Bank 3
+                    };
 
-                    Log.d("READ_TAG", "Read TID from tag " + epcTag);
-                    byte []tidData = nurApi.readTagByEpc(targetEpcData, targetEpcData.length, NurApi.BANK_TID, 0, 4);
+                    String[] bankNames = {"RESERVED", "EPC", "TID", "USER"};
 
-                    Log.d("READ_TAG", "Read EPC from tag TID " + Arrays.toString(tidData));
-                    byte []readEpcData = nurApi.readTag(NurApi.BANK_TID, 0, tidData.length*8, tidData, NurApi.BANK_EPC, 2, targetEpcData.length);
+                    // Try different combinations of offsets and lengths
+                    for (int b = 0; b < banks.length; b++) {
+                        Log.d("READ_TAG", "=== Scanning " + bankNames[b] + " Bank ===");
 
-                    Log.d("READ_TAG", "Read EPC " + NurApi.byteArrayToHexString(readEpcData));
+                        // Try different starting offsets (in words)
+                        for (int offset = 0; offset < 16; offset++) {
+                            // Try different lengths (in words)
+                            for (int length = 1; length <= 16; length++) {
+                                try {
+                                    byte[] memory = nurApi.readTagByEpc(
+                                            targetEpcData,
+                                            targetEpcData.length,
+                                            banks[b],
+                                            offset,
+                                            length
+                                    );
 
-                    if(epcTag.equals(NurApi.byteArrayToHexString(readEpcData))) {
-                        Log.d("READ_TAG", "OK");
-                    } else {
-                        Log.d("READ_TAG", "NOT OK");
-                    }
-                    
-                    // Read first 32 bytes (8 words) of user memory with different offsets
-                    for (int offset = 0; offset < 8; offset++) {
-                        try {
-                            byte[] userMemory = nurApi.readTagByEpc(targetEpcData, targetEpcData.length,
-                                    NurApi.BANK_USER, offset, 8);
-                            Log.d("READ_TAG", "User Memory Data (offset " + offset + "): "
-                                    + NurApi.byteArrayToHexString(userMemory));
-                        } catch (Exception e) {
-                            Log.d("READ_TAG", "Failed to read offset " + offset + ": " + e.getMessage());
+                                    String hexData = NurApi.byteArrayToHexString(memory);
+                                    if (!hexData.matches("^0+$")) { // Only log non-zero data
+                                        Log.d("READ_TAG", String.format(
+                                                "Bank: %s, Offset: %d, Length: %d, Data: %s",
+                                                bankNames[b],
+                                                offset,
+                                                length,
+                                                hexData
+                                        ));
+                                    }
+                                } catch (Exception e) {
+                                    // Log only if it's not a typical "out of bounds" error
+                                    if (!e.getMessage().contains("Too many words requested") &&
+                                            !e.getMessage().contains("No tag found") &&
+                                            !e.getMessage().contains("Access denied")) {
+                                        Log.d("READ_TAG", String.format(
+                                                "Error reading Bank: %s, Offset: %d, Length: %d - %s",
+                                                bankNames[b],
+                                                offset,
+                                                length,
+                                                e.getMessage()
+                                        ));
+                                    }
+                                }
+                            }
                         }
                     }
 
