@@ -307,28 +307,30 @@ public class NurHelper {
                 final JSONArray jsonArray = new JSONArray();
 
                 int xpcW2 = tag.getXPC_W2();
+
                 Log.d("XPCW2_RAW", String.valueOf(xpcW2));
 
-                // Get just the lower byte which contains our data (CA, CD, CB etc)
-                int lowerByte = xpcW2 & 0xFF;
-                Log.d("XPCW2_HEX", String.format("0x%02X", lowerByte));
+                // Extract SensorType (4 most significant bits)
+                int sensorType = (xpcW2 >> 12) & 0xF;  // Should be 0000
 
-                // Parse according to specification
-                // For byte 0xCA: 1100 1010
-                //                SSDD VVVV  (S=SensorType, D=DataType, V=Value)
-                int sensorType = (lowerByte >> 6) & 0x3;    // First 2 bits (11)
-                int dataType = (lowerByte >> 4) & 0x3;      // Next 2 bits (00)
-                int sensorValue = lowerByte & 0xF;          // Last 4 bits (1010)
+                // Extract data type (2 bits)
+                int dataType = (xpcW2 >> 10) & 0x3;    // Will be either 00 (error) or 11 (valid data)
 
-                Log.d("XPCW2_PARSED", String.format(
-                    "SensorType: %d, DataType: %d, Value: %d (0x%02X)",
-                    sensorType, dataType, sensorValue, lowerByte
-                ));
+                // Extract sensor data (10 bits)
+                int sensorData = xpcW2 & 0x3FF;        // The actual sensor reading
 
-                // For debugging, show binary format
-                Log.d("XPCW2_BINARY", String.format(
-                    "%8s", Integer.toBinaryString(lowerByte & 0xFF)).replace(' ', '0')
-                );
+                // If dataType is 11 (3), then sensorData is valid
+                if (dataType == 3) {
+                    // sensorData is a 10-bit signed integer
+                    // Convert from 10-bit signed to regular signed int if needed
+                    if ((sensorData & 0x200) != 0) {  // Check if negative
+                        sensorData = sensorData - 1024;  // Convert to negative value
+                    }
+                    Log.d("XPCW2", "Sensor Data: " + sensorData);
+                } else {
+                    // Error case - all 1's in the data portion indicates an error
+                    Log.d("XPCW2", "Sensor Error detected");
+                }
 
                 if (mTagStorage.addTag(tag)) {
                     // Add new
