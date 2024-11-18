@@ -310,26 +310,16 @@ public class NurHelper {
 
                 Log.d("XPCW2_RAW", String.valueOf(xpcW2));
 
-                // Extract SensorType (4 most significant bits)
-                int sensorType = (xpcW2 >> 12) & 0xF;  // Should be 0000
-
-                // Extract data type (2 bits)
-                int dataType = (xpcW2 >> 10) & 0x3;    // Will be either 00 (error) or 11 (valid data)
-
-                // Extract sensor data (10 bits)
-                int sensorData = xpcW2 & 0x3FF;        // The actual sensor reading
-
-                // If dataType is 11 (3), then sensorData is valid
-                if (dataType == 3) {
-                    // sensorData is a 10-bit signed integer
-                    // Convert from 10-bit signed to regular signed int if needed
-                    if ((sensorData & 0x200) != 0) {  // Check if negative
-                        sensorData = sensorData - 1024;  // Convert to negative value
-                    }
-                    Log.d("XPCW2", "Sensor Data: " + sensorData);
+                if ((xpcW2 & 0x0C00) == 0x0C00) {
+                    // Valid sensor data found
+                    int sensingData = 0x3FF & xpcW2;
+                    double cSense = (sensingData - 128) * 0.16;
+                    Log.d("SENSING_DATA", String.format("EPC: %s, RSSI: %d, SensingData: %d, CSENSE: %.2f pF",
+                            tag.getEpcString(), tag.getRssi(), sensingData, cSense));
                 } else {
-                    // Error case - all 1's in the data portion indicates an error
-                    Log.d("XPCW2", "Sensor Error detected");
+                    // Invalid sensor data
+                    Log.d("SENSING_DATA", String.format("EPC: %s, RSSI: %d, Invalid SensingData (XPC_W2): %04X",
+                            tag.getEpcString(), tag.getRssi(), xpcW2));
                 }
 
                 if (mTagStorage.addTag(tag)) {
