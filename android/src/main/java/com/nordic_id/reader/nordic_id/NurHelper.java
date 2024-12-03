@@ -35,6 +35,8 @@ import com.nordicid.nurapi.NurEventTagTrackingChange;
 import com.nordicid.nurapi.NurEventTagTrackingData;
 import com.nordicid.nurapi.NurEventTraceTag;
 import com.nordicid.nurapi.NurEventTriggeredRead;
+import com.nordicid.nurapi.NurInventoryExtended;
+import com.nordicid.nurapi.NurInventoryExtendedFilter;
 import com.nordicid.nurapi.NurRespDevCaps;
 import com.nordicid.nurapi.NurRespReadData;
 import com.nordicid.nurapi.NurRespReaderInfo;
@@ -263,6 +265,8 @@ public class NurHelper {
      */
     public boolean doSingleInventory() throws Exception {
 
+        Log.d("SENSING_DATA", "Performing single inventory");
+
         if (!mNurApi.isConnected())
             return false;
 
@@ -294,7 +298,7 @@ public class NurHelper {
      * New tags will be added to our existing tag storage.
      * List view adapter will be updated for new tags
      */
-    public void handleInventoryResult() {
+    public void handleInventoryResult() throws Exception {
         synchronized (mNurApi.getStorage()) {
             HashMap<String, String> tmp;
             NurTagStorage tagStorage = mNurApi.getStorage();
@@ -309,6 +313,26 @@ public class NurHelper {
                 int xpcW2 = tag.getXPC_W2();
 
                 Log.d("XPCW2_RAW", String.valueOf(xpcW2));
+
+                NurInventoryExtended invParam = new NurInventoryExtended();
+                invParam.inventorySelState = NurApi.INVSELSTATE_SL;
+                invParam.inventoryTarget = NurApi.INVTARGET_A;
+                invParam.Q = 0;
+                invParam.rounds = 0;
+                invParam.session = NurApi.SESSION_S0;
+                invParam.transitTime = 0;
+
+                NurInventoryExtendedFilter[] invFilters = new NurInventoryExtendedFilter[1];
+                invFilters[0] = new NurInventoryExtendedFilter();
+                invFilters[0].action = NurApi.FILTER_ACTION_0;
+                invFilters[0].address = 0;
+                invFilters[0].bank = NurApi.BANK_TID;
+                invFilters[0].maskdata = new byte[] {(byte) 0xE2, (byte) 0x80, (byte) 0xB1, (byte) 0x20};
+                invFilters[0].maskBitLength = (invFilters[0].maskdata.length * 8) - 2;
+                invFilters[0].targetSession = NurApi.SESSION_SL;
+                invFilters[0].truncate = false;
+
+                mNurApi.inventoryExtended(invParam, invFilters[0]);
 
                 if ((xpcW2 & 0x0C00) == 0x0C00) {
                     // Valid sensor data found
